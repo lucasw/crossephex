@@ -36,12 +36,23 @@ void draw(){
 
 public void mouseDragged(){
 
-  if ((mouseX>=rectX-rectWidth/2-dragMargin && mouseX<=rectX+rectWidth/2+dragMargin) && (mouseY>=rectY-rectHeight/2-dragMargin && mouseY<=rectY+rectHeight/2+dragMargin)){
+  int newX = mouseX;
+  int newY = mouseY;
+      
+  /// keep within screen borders for now, later support larger workspace with scrollbars
+  if (newX < 0) newX = 0;
+  if (newY < 0) newY = 0;
+  if (newX > width)  newX = width;
+  if (newY > height) newY = height;
+      
+  if ((newX>=rectX-rectWidth/2-dragMargin && newX<=rectX+rectWidth/2+dragMargin) && 
+      (newY>=rectY-rectHeight/2-dragMargin && newY<=rectY+rectHeight/2+dragMargin) ){
+        
    cursor(HAND);
    fill(168);
    stroke(224);
-   rectX = mouseX;
-   rectY = mouseY;
+   rectX = newX;
+   rectY = newY;
   }
  
 }

@@ -3,13 +3,13 @@
  *Authors: BinaryMillenium, VirtualFlavius
  *Notes: this is very preliminary code
  *
+ * 
  */
+import java.util.ArrayList;
 
-int rectX;
-int rectY;
-int rectHeight;
-int rectWidth;
-int dragMargin; 
+//ArrayList<module> mlist = new ArrayList<module>();
+ArrayList mlist = new ArrayList();
+//Module theModule;
 
 void setup(){
   size(720, 576);
@@ -17,48 +17,58 @@ void setup(){
   background(0);
   fill(128);
   stroke(255);
-
-
-  rectHeight=48;
-  rectWidth=48;
-  rectX=width/2;
-  rectY=height/2;
-  dragMargin=32; //this is used in order to keep dragging during fast mouse movement
+  
+  println("Press the 'a' key to add a new module to the screen");
   
   rectMode(CENTER);
 
 }
 
-void draw(){
-  background(0);
-  rect(rectX, rectY, rectWidth, rectWidth);
+int findClosestModuleInDragRange(int x, int y) {
+  float minDist = dist(0,0,width,height);
+  int minInd = -1;
+  
+   for (int i = 0; i < mlist.size(); i++) {
+     Module thisModule =  (Module) mlist.get(i);
+     float testDist = dist(thisModule.rectX,thisModule.rectY,x,y);
+     
+     if ((testDist < minDist) && thisModule.inDragRange(x,y) ) {
+       minDist = testDist; 
+       minInd  = i; 
+     }
+   }
+   
+   return minInd;
 }
 
-public void mouseDragged(){
-
-  int newX = mouseX;
-  int newY = mouseY;
-      
-  /// keep within screen borders for now, later support larger workspace with scrollbars
-  if (newX < 0) newX = 0;
-  if (newY < 0) newY = 0;
-  if (newX > width)  newX = width;
-  if (newY > height) newY = height;
-      
-  if ((newX>=rectX-rectWidth/2-dragMargin && newX<=rectX+rectWidth/2+dragMargin) && 
-      (newY>=rectY-rectHeight/2-dragMargin && newY<=rectY+rectHeight/2+dragMargin) ){
-        
-   cursor(HAND);
-   fill(168);
-   stroke(224);
-   rectX = newX;
-   rectY = newY;
+void draw(){
+  background(0);
+  
+  for (int i = 0; i < mlist.size(); i++) {
+    Module thisModule =  (Module) mlist.get(i);
+    thisModule.display();  
   }
- 
+  
+}
+
+void keyPressed() {
+  if (key == 'a') {
+      mlist.add(new Module(mouseX,mouseY,48,48,32)  );
+  }
+}
+
+
+
+public void mouseDragged(){
+  int ind = findClosestModuleInDragRange(mouseX,mouseY);
+  
+  if (ind >= 0) {
+    Module thisModule = (Module) mlist.get(ind);
+    thisModule.drag(mouseX,mouseY); 
+  }
 }
  
 public void mouseReleased(){
  cursor(ARROW);
  fill(128);
-
 }

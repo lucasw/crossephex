@@ -1,10 +1,32 @@
 
+class Port {
+int x;
+int y;
+int h = 10;
+int w = 10;
+  
+  ArrayList mlist; 
+    
+  Port(int nx, int ny) {
+    x = nx;
+    y = ny; 
+    mlist = new ArrayList();
+  }
+  
+  void display( ) {
+    rect(x,y, 10, 10);
+  }
+  
+
+}
 
 class Module {
   int rectX;
   int rectY;
   int rectHeight;
   int rectWidth;
+  
+  Port outport;
   
   //this is used in order to keep dragging during fast mouse movement
   int dragMargin; 
@@ -15,6 +37,8 @@ class Module {
      rectHeight = rH;
      rectWidth= rW;
      dragMargin = dM;
+     
+     outport = new Port(rectWidth/2-10/2, 0);
   } 
  
    boolean inDragRange(int newX, int newY){
@@ -24,7 +48,7 @@ class Module {
     if (newX > width)  newX = width;
     if (newY > height) newY = height;
       
-    if ((newX>=rectX-rectWidth/2-dragMargin && newX<=rectX+rectWidth/2+dragMargin) && 
+    if ((newX>=rectX-rectWidth/2-dragMargin  && newX<=rectX+rectWidth/2+dragMargin) && 
         (newY>=rectY-rectHeight/2-dragMargin && newY<=rectY+rectHeight/2+dragMargin) ){
        
        return true;
@@ -42,13 +66,21 @@ class Module {
     if (newY > height) newY = height;
     
      cursor(HAND);
-     fill(168);
-     stroke(224);
+   
+     
      rectX = newX;
      rectY = newY;      
   }
   
-  void display() {
-     rect(rectX, rectY, rectWidth, rectWidth);
+  void display(boolean isSelected) {
+    pushMatrix();
+    translate(rectX,rectY);
+    
+    if (isSelected) stroke(150);
+    else stroke(255);
+    
+    rect(0, 0, rectWidth, rectWidth);
+    outport.display();
+    popMatrix();
   }
 }

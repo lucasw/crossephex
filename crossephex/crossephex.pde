@@ -9,14 +9,16 @@ import java.util.ArrayList;
 
 //ArrayList<module> mlist = new ArrayList<module>();
 ArrayList mlist = new ArrayList();
-//Module theModule;
+
+// index into mlist
+int moduleSelected = -1;
 
 void setup(){
   size(720, 576);
   frameRate(60);
   background(0);
   fill(128);
-  stroke(255);
+  
   
   println("Press the 'a' key to add a new module to the screen");
   
@@ -46,7 +48,14 @@ void draw(){
   
   for (int i = 0; i < mlist.size(); i++) {
     Module thisModule =  (Module) mlist.get(i);
-    thisModule.display();  
+    
+    thisModule.display(i == moduleSelected);  
+    
+    for (int j = 0; j < thisModule.outport.mlist.size(); j++) {
+      Module endModule = (Module) thisModule.outport.mlist.get(j);
+      line(thisModule.rectX+thisModule.outport.x,thisModule.rectY,
+           endModule.rectX,endModule.rectY);
+    }
   }
   
 }
@@ -60,15 +69,47 @@ void keyPressed() {
 
 
 public void mouseDragged(){
+  
+  if (mouseButton == LEFT) {
   int ind = findClosestModuleInDragRange(mouseX,mouseY);
   
   if (ind >= 0) {
     Module thisModule = (Module) mlist.get(ind);
     thisModule.drag(mouseX,mouseY); 
+    moduleSelected = ind;
+  } else {
+    moduleSelected = -1;
   }
+  }
+}
+
+public void mousePressed() {
+  
+   if (mouseButton == LEFT) {
+  int ind = findClosestModuleInDragRange(mouseX,mouseY);
+  
+  if (ind >= 0) {
+    moduleSelected = ind;
+  } else {
+    moduleSelected = -1;
+  }
+  }
+  
+   if (mouseButton == RIGHT) {
+     /// connect an output port to another module
+     int ind = findClosestModuleInDragRange(mouseX,mouseY);
+  
+     if ((moduleSelected >= 0) && (ind >= 0)) {
+       Module startModule = (Module) mlist.get(moduleSelected);
+       Module endModule   = (Module) mlist.get(ind);
+       
+       startModule.outport.mlist.add(endModule);
+     }
+     
+   }
 }
  
 public void mouseReleased(){
  cursor(ARROW);
- fill(128);
+ 
 }

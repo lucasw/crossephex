@@ -51,6 +51,7 @@ void draw(){
     
     thisModule.display(i == moduleSelected);  
     
+    /// draw the lines that connect ports
     for (int j = 0; j < thisModule.outport.mlist.size(); j++) {
       Module endModule = (Module) thisModule.outport.mlist.get(j);
       line(thisModule.rectX+thisModule.outport.x,thisModule.rectY,
@@ -63,6 +64,10 @@ void draw(){
 void keyPressed() {
   if (key == 'a') {
       mlist.add(new Module(mouseX,mouseY,48,48,32)  );
+  }
+  
+  if (key == 's') {
+      mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,"test.png")  );
   }
 }
 

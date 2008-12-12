@@ -20,7 +20,9 @@ void setup(){
   fill(128);
   
   
-  println("Press the 'a' key to add a new module to the screen");
+  println("Press the 'a' key to add a new module to the screen \n" +
+ "select a module with the left mouse button and connect it to another module with \n" +
+ "the right mouse button");
   
   rectMode(CENTER);
 
@@ -101,16 +103,33 @@ public void mousePressed() {
   }
   
    if (mouseButton == RIGHT) {
-     /// connect an output port to another module
+     /// connect an output port to another module's input port
      int ind = findClosestModuleInDragRange(mouseX,mouseY);
   
      if ((moduleSelected >= 0) && (ind >= 0)) {
        Module startModule = (Module) mlist.get(moduleSelected);
        Module endModule   = (Module) mlist.get(ind);
+        
+       /// inports can only support one input,
+       // so clear out anything connected to it before adding this one
+       for (int j = 0; j < endModule.inport.mlist.size(); j++) {
+          Module otherConnectedModule = (Module) endModule.inport.mlist.get(j);
+          int removeind = otherConnectedModule.outport.mlist.indexOf(endModule);
+          
+          if (removeind >= 0) { 
+            otherConnectedModule.outport.mlist.remove(removeind);
+             /// TBD may screw up for loop?  But for loop should only ever run once
+            endModule.inport.mlist.remove(j); 
+          } else {
+            println("failed to find module for removal, probably a bug"); 
+            return;  
+          }
+       }
        
+       /// add links going in both direction
        startModule.outport.mlist.add(endModule);
-     }
-     
+       endModule.inport.mlist.add(startModule);
+     } 
    }
 }
  

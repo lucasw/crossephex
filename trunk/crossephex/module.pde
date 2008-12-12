@@ -16,11 +16,12 @@ int w = 10;
   void display( ) {
     rect(x,y, 10, 10);
   }
-  
-
 }
 
 class Module {
+  
+  PImage im;
+  
   int rectX;
   int rectY;
   int rectHeight;
@@ -80,7 +81,30 @@ class Module {
     else stroke(255);
     
     rect(0, 0, rectWidth, rectWidth);
+    
+     //translate(rectX,rectY);
+    if (im != null) image(im, -rectWidth*0.4, -rectHeight*0.4, 
+    rectWidth*0.4, rectHeight*0.4);
+    
     outport.display();
     popMatrix();
+  }
+}
+
+class ImageSourceModule extends Module {
+  
+  ImageSourceModule(int rX, int rY, int rH, int rW, int dM, String fileName) {
+    super(rX, rY, rH, rW, dM);
+    im = loadImage(fileName);  
+  }
+  
+  void display(boolean isSelected) {
+    super.display(isSelected);
+    
+    //pushMatrix();
+    //translate(rectX,rectY);
+    
+    //text("source");
+    //popMatrix();
   }
 }

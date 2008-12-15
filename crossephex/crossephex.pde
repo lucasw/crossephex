@@ -7,8 +7,10 @@
  */
 import java.util.ArrayList;
 
-//ArrayList<module> mlist = new ArrayList<module>();
 ArrayList mlist = new ArrayList();
+// this holds all outputs that if active need to be updated, and all
+// modules connected to them need to be updated.
+ArrayList activeOutputs = new ArrayList();
 
 // index into mlist
 int moduleSelected = -1;
@@ -45,9 +47,24 @@ int findClosestModuleInDragRange(int x, int y) {
    return minInd;
 }
 
+int updateCount = 0;
+
 void draw(){
+  
   background(0);
   
+  updateCount++;
+  
+  /// recursively update modules that are connected to active displays
+  for (int i = 0; i < activeOutputs.size(); i++) {
+    Module thisModule =  (Module) activeOutputs.get(i);
+      
+    thisModule.update(updateCount);
+    
+
+  }
+  
+  /// draw all modules, even if they aren't being updated
   for (int i = 0; i < mlist.size(); i++) {
     Module thisModule =  (Module) mlist.get(i);
     
@@ -60,50 +77,14 @@ void draw(){
            endModule.rectX,endModule.rectY);
     }
   }
-  
-}
+    
 
-void keyPressed() {
-  if (key == 'a') {
-      mlist.add(new Module(mouseX,mouseY,48,48,32)  );
-  }
-  
-  if (key == 's') {
-      mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,"test.png")  );
-  }
 }
 
 
-
-public void mouseDragged(){
-  
-  if (mouseButton == LEFT) {
-  int ind = findClosestModuleInDragRange(mouseX,mouseY);
-  
-  if (ind >= 0) {
-    Module thisModule = (Module) mlist.get(ind);
-    thisModule.drag(mouseX,mouseY); 
-    moduleSelected = ind;
-  } else {
-    moduleSelected = -1;
-  }
-  }
-}
-
-public void mousePressed() {
-  
-   if (mouseButton == LEFT) {
-  int ind = findClosestModuleInDragRange(mouseX,mouseY);
-  
-  if (ind >= 0) {
-    moduleSelected = ind;
-  } else {
-    moduleSelected = -1;
-  }
-  }
-  
-   if (mouseButton == RIGHT) {
-     /// connect an output port to another module's input port
+/// TBD need to prevent modules that have no input capability from being connected
+boolean connectModule() {
+  /// connect an output port to another module's input port
      int ind = findClosestModuleInDragRange(mouseX,mouseY);
   
      if ((moduleSelected >= 0) && (ind >= 0)) {
@@ -122,14 +103,77 @@ public void mousePressed() {
             endModule.inport.mlist.remove(j); 
           } else {
             println("failed to find module for removal, probably a bug"); 
-            return;  
+            return false;  
           }
        }
        
        /// add links going in both direction
        startModule.outport.mlist.add(endModule);
        endModule.inport.mlist.add(startModule);
-     } 
+       return true;
+     }
+     
+     return false;
+}
+
+boolean selectModule() {
+    int ind = findClosestModuleInDragRange(mouseX,mouseY);
+  
+  if (ind >= 0) {
+    moduleSelected = ind;
+  } else {
+    moduleSelected = -1;
+    return false;
+  }
+  
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// UI stuff
+
+void keyPressed() {
+  if (key == 'a') {
+      mlist.add(new Module(mouseX,mouseY,48,48,32)  );
+  }
+  
+  if (key == 's') {
+      mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,"test.png")  );
+  }
+  
+   
+  if (key == 'd') {
+      ImageOutputModule newmod = new ImageOutputModule(mouseX,mouseY,88,88,32)  ;
+      mlist.add(newmod);
+      activeOutputs.add(newmod);
+  }
+  
+}
+
+public void mouseDragged(){
+  
+  if (mouseButton == LEFT) {
+  int ind = findClosestModuleInDragRange(mouseX,mouseY);
+  
+  if (ind >= 0) {
+    Module thisModule = (Module) mlist.get(ind);
+    thisModule.drag(mouseX,mouseY); 
+    moduleSelected = ind;
+  } else {
+    moduleSelected = -1;
+  }
+  }
+}
+
+
+public void mousePressed() {
+  
+  if (mouseButton == LEFT) {
+    selectModule();
+  }
+  
+   if (mouseButton == RIGHT) {
+     connectModule();
    }
 }
  
@@ -137,3 +181,5 @@ public void mouseReleased(){
  cursor(ARROW);
  
 }
+
+

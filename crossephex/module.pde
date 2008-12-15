@@ -1,4 +1,6 @@
 
+
+
 class Port {
   int x;
   int y;
@@ -40,12 +42,16 @@ class Module {
   //this is used in order to keep dragging during fast mouse movement
   int dragMargin; 
   
+  int lastUpdateCount = 0;
+  
   Module(int rX, int rY, int rH, int rW, int dM) {
      rectX = rX;
      rectY = rY;
      rectHeight = rH;
      rectWidth= rW;
      dragMargin = dM;
+     
+     
      
      outport = new Port(rectWidth/2-10/2, 0);
      
@@ -54,6 +60,28 @@ class Module {
      fillColor = color(150,150,149);
   } 
  
+   /// recursive update every module that's an input to this module
+   void update(int updateCount) {
+     if (lastUpdateCount == updateCount) return;
+     lastUpdateCount = updateCount;  
+     
+      for (int j = 0; j < inport.mlist.size(); j++) {  // should be only one
+        Module otherConnectedModule = (Module) inport.mlist.get(j);
+        otherConnectedModule.update(updateCount);
+        
+        /// by putting the image copying and processing code after the recursive update
+        /// we should have 1-cycle forward propagation of changes that don't involve loops
+        /// TBD - is this desirable?  It may be useful if every module is also a unit delay
+        if (otherConnectedModule.im != null) {
+          // TBD add a flag that either propagates the inherited image size forward or always
+          // resizes at this step.
+          if (im == null) im = createImage(otherConnectedModule.im.width,otherConnectedModule.im.height,RGB);
+          im.copy(otherConnectedModule.im,0,0,otherConnectedModule.im.width, otherConnectedModule.im.height,
+                                        0,0,im.width, im.height);
+        }
+      }
+   }
+   
    boolean inDragRange(int newX, int newY){
     /// keep within screen borders for now, later support larger workspace with scrollbars
     if (newX < 0) newX = 0;
@@ -70,7 +98,6 @@ class Module {
     return false;
   }
   
-  
   void drag(int newX, int newY){
     
     if (newX < 0) newX = 0;
@@ -84,7 +111,7 @@ class Module {
      rectX = newX;
      rectY = newY;      
   }
-  
+    
   void display(boolean isSelected) {
     pushMatrix();
     translate(rectX,rectY);
@@ -98,9 +125,17 @@ class Module {
     
      //translate(rectX,rectY);
     if (im != null) image(im, -rectWidth*0.4, -rectHeight*0.4, 
-    rectWidth*0.4, rectHeight*0.4);
+                               rectWidth*0.4, rectHeight*0.4);
+    
     
     outport.display();
+    
+    /// draw a green active rect to show this module has been updated this cycle
+    if (lastUpdateCount == updateCount) { 
+      
+      fill(0,255,0);
+      rect(-rectWidth/2+10/2,-rectHeight/2+10/2,10,10);
+    }
     popMatrix();
   }
 }
@@ -135,9 +170,12 @@ class ImageOutputModule extends Module {
    void display(boolean isSelected) {
       super.display(isSelected);
       
+      pushMatrix();
+      translate(rectX,rectY);
       /// probably get generalize this with im width/height parameters
       if (im != null) image(im, -rectWidth*0.4, -rectHeight*0.4, 
                                  rectWidth*0.8, rectHeight*0.8);
+      popMatrix();
       
    }
 }

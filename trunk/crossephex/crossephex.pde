@@ -12,17 +12,22 @@ ArrayList mlist = new ArrayList();
 // modules connected to them need to be updated.
 ArrayList activeOutputs = new ArrayList();
 
-// index into mlist
+// index into mlist of module that is currently selected
 int moduleSelected = -1;
+
+// increment on every update
+int updateCount = 0;
 
 void setup(){
   size(720, 576);
-  frameRate(60);
+  frameRate(30);
   background(0);
   fill(128);
   
   
   println("Press the 'a' key to add a new module to the screen \n" +
+   "'s' key to add a new image source module\n" +
+    "'d' key to add a new display module\n" +
  "select a module with the left mouse button and connect it to another module with \n" +
  "the right mouse button");
   
@@ -47,7 +52,7 @@ int findClosestModuleInDragRange(int x, int y) {
    return minInd;
 }
 
-int updateCount = 0;
+
 
 void draw(){
   
@@ -73,8 +78,8 @@ void draw(){
     /// draw the lines that connect ports
     for (int j = 0; j < thisModule.outport.mlist.size(); j++) {
       Module endModule = (Module) thisModule.outport.mlist.get(j);
-      line(thisModule.rectX+thisModule.outport.x,thisModule.rectY,
-           endModule.rectX,endModule.rectY);
+      line(thisModule.rectX+thisModule.outport.x,thisModule.rectY+thisModule.outport.y,
+            endModule.rectX+thisModule.inport.x,  endModule.rectY+thisModule.inport.y);
     }
   }
     
@@ -138,12 +143,21 @@ void keyPressed() {
   }
   
   if (key == 's') {
-      mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,"test.png")  );
+    //String curDir = System.getProperty("user.dir");
+    
+    //getSketch().getCodeFolder() +
+      mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,sketchPath("") + "/images")  );
   }
   
+  if (key == 't') {
+    if (moduleSelected >= 0) {
+      Module thisModule = (Module) mlist.get(moduleSelected);
+      thisModule.toggle();
+    }
+  }
    
   if (key == 'd') {
-      ImageOutputModule newmod = new ImageOutputModule(mouseX,mouseY,88,88,32)  ;
+      ImageOutputModule newmod = new ImageOutputModule(mouseX,mouseY,320,240,32)  ;
       mlist.add(newmod);
       activeOutputs.add(newmod);
   }

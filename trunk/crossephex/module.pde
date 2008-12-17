@@ -7,18 +7,23 @@ class Port {
   int h = 10;
   int w = 10;
   
-
+  color fillCol;
   
   ArrayList mlist; 
     
-  Port(int nx, int ny) {
+  Port(int nx, int ny, color nc) {
     x = nx;
     y = ny; 
+    fillCol = nc;
     mlist = new ArrayList();
   }
   
   void display( ) {
+    pushMatrix();
+    if (mlist.size() > 0) fill(color(red(fillCol)+25,green(fillCol)+50,blue(fillCol)+35));
+    else fill(fillCol);
     rect(x,y, 10, 10);
+    popMatrix();
   }
 }
 
@@ -50,14 +55,12 @@ class Module {
      rectHeight = rH;
      rectWidth= rW;
      dragMargin = dM;
-     
-     
-     
-     outport = new Port(rectWidth/2-10/2, 0);
-     
-     inport = new Port(-rectWidth/2, 0);
-     
+      
      fillColor = color(150,150,149);
+     
+     outport = new Port(rectWidth/2-10/2, 0, fillColor);
+     
+     inport = new Port(-rectWidth/2+10/2, 0, fillColor);
   } 
  
    /// recursive update every module that's an input to this module
@@ -111,6 +114,11 @@ class Module {
      rectX = newX;
      rectY = newY;      
   }
+
+  /// do something when the module is selected 
+  void toggle(){
+    
+  }
     
   void display(boolean isSelected) {
     pushMatrix();
@@ -128,6 +136,7 @@ class Module {
                                rectWidth*0.4, rectHeight*0.4);
     
     
+    inport.display();
     outport.display();
     
     /// draw a green active rect to show this module has been updated this cycle
@@ -180,15 +189,42 @@ class ImageOutputModule extends Module {
    }
 }
 
+///////////////////////////////////////////////////////////////////
 
 class ImageSourceModule extends Module {
   
-  ImageSourceModule(int rX, int rY, int rH, int rW, int dM, String fileName) {
+  File dir;
+  String[] files;
+  int curind = -1;
+  
+  String folderName;
+  
+  ImageSourceModule(int rX, int rY, int rH, int rW, int dM, String folderName) {
     super(rX, rY, rH, rW, dM);
     
-    fillColor = color(190,160,157);
+    this.folderName = folderName;
     
-    im = loadImage(fileName);  
+    fillColor = color(190,160,157);
+  
+    dir = new File( folderName);
+    files = dir.list();
+    
+    
+    if (files == null) {
+      println(folderName + " dir not found"); 
+      return;
+    }
+    
+    toggle();
+    
+  }
+  
+  void toggle() {
+    for (int i = curind+1; i < curind+files.length; i++) {
+      int newind = i%files.length;
+      im = loadImage(folderName + "/" + files[newind]);
+      if (im != null) { curind = newind; break; }
+    }
   }
   
   void display(boolean isSelected) {

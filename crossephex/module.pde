@@ -9,7 +9,10 @@ class Port {
   
   color fillCol;
   
+  // other ports that are connected to this port
   ArrayList mlist; 
+  
+  Module parentModule;
     
   Port(int nx, int ny, color nc) {
     x = nx;
@@ -41,7 +44,9 @@ class Module {
   /// how to handle these more generically?
   // some module have one or the other or none
   // TBD make them arrays of default size zero
-  Port inport;
+  
+  ArrayList inports;
+  //Port inport;
   Port outport;
   
   //this is used in order to keep dragging during fast mouse movement
@@ -58,9 +63,16 @@ class Module {
       
      fillColor = color(150,150,149);
      
-     outport = new Port(rectWidth/2-10/2, 0, fillColor);
      
-     inport = new Port(-rectWidth/2+10/2, 0, fillColor);
+     outport = new Port(rectWidth/2-10/2, 0, fillColor);
+     outport.parentModule = this;
+     
+      inports = new ArrayList();
+      
+     Port inport = new Port(-rectWidth/2+10/2, 0, fillColor);
+     inport.parentModule = this;
+     inports.add(inport);
+     
   } 
  
    /// recursive update every module that's an input to this module
@@ -68,8 +80,11 @@ class Module {
      if (lastUpdateCount == updateCount) return;
      lastUpdateCount = updateCount;  
      
+      for (int i = 0; i < inports.size(); i++) {
+        Port inport = (Port)inports.get(i);
+        
       for (int j = 0; j < inport.mlist.size(); j++) {  // should be only one
-        Module otherConnectedModule = (Module) inport.mlist.get(j);
+        Module otherConnectedModule = ((Port) inport.mlist.get(j)).parentModule;
         otherConnectedModule.update(updateCount);
         
         /// by putting the image copying and processing code after the recursive update
@@ -82,6 +97,7 @@ class Module {
           im.copy(otherConnectedModule.im,0,0,otherConnectedModule.im.width, otherConnectedModule.im.height,
                                         0,0,im.width, im.height);
         }
+      }
       }
    }
    
@@ -136,7 +152,10 @@ class Module {
                                rectWidth*0.4, rectHeight*0.4);
     
     
-    inport.display();
+    for (int i = 0; i < inports.size(); i++) {
+      Port inport = (Port)inports.get(i);
+      inport.display();
+    }
     outport.display();
     
     /// draw a green active rect to show this module has been updated this cycle
@@ -149,9 +168,11 @@ class Module {
   }
 }
 
+/////////////////////////////////////////////////////////////////
+
+
 class ImageMixerModule extends Module {
-  //PImage inport1;
-  PImage inport2;
+  
   
   float mix = 1.0;
   
@@ -159,8 +180,19 @@ class ImageMixerModule extends Module {
   ImageMixerModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
     fillColor = color(110,150,149);
+    
+     Port inport = new Port(-rectWidth/2+10/2,12, fillColor);
+     inport.parentModule = this;
+     inports.add(inport);
   }
   
+  
+  
+  
+  void display(boolean isSelected) {
+    super.display(isSelected);
+    
+  }
   //for (int i = 0;
   
 }

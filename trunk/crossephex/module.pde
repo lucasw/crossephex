@@ -93,6 +93,7 @@ class Module {
         if (otherConnectedModule.im != null) {
           // TBD add a flag that either propagates the inherited image size forward or always
           // resizes at this step.
+          /// TBD this is not correct in all modules that inherit from this, like the mixer
           if (im == null) im = createImage(otherConnectedModule.im.width,otherConnectedModule.im.height,RGB);
           im.copy(otherConnectedModule.im,0,0,otherConnectedModule.im.width, otherConnectedModule.im.height,
                                         0,0,im.width, im.height);
@@ -174,7 +175,7 @@ class Module {
 class ImageMixerModule extends Module {
   
   
-  float mix = 1.0;
+  float mix = 0.5;
   
   
   ImageMixerModule(int rX, int rY, int rH, int rW, int dM) {   
@@ -185,15 +186,46 @@ class ImageMixerModule extends Module {
      inport.parentModule = this;
      inports.add(inport);
   }
-  
-  
-  
-  
+
   void display(boolean isSelected) {
     super.display(isSelected);
     
   }
-  //for (int i = 0;
+ 
+  void update(int updateCount) {
+    super.update(updateCount);
+    
+    if (inports.get(0) == null) return;
+    if (inports.get(1) == null) return;
+    
+    PImage im1 = ((Port)inports.get(0)).parentModule.im;
+    PImage im2 = ((Port)inports.get(1)).parentModule.im;
+    
+    if (im == null) return;
+    if (im1 == null) return;
+    if (im2 == null) return;
+    
+    int w = min(im1.width, im2.width,im.width);
+    int h = min(im1.height,im2.height,im.height);
+    
+    //println(im1.width + " " + im2.width + " " + im.width);
+    for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+      int pixind0 = i*im.width+j;
+      int pixind1 = i*im1.width+j;
+      int pixind2 = i*im2.width+j;
+      
+      color c1 = im1.pixels[pixind1];
+      color c2 = im2.pixels[pixind2];
+      
+      im.pixels[pixind0] = color(
+        mix*red(c1)   + (1.0-mix)*red(c2),
+        mix*green(c1) + (1.0-mix)*green(c2),
+        mix*blue(c1)  + (1.0-mix)*blue(c2)
+      );
+      
+    }}
+  }
   
 }
 

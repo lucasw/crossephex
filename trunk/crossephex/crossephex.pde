@@ -178,10 +178,11 @@ void keyPressed() {
   }
   
   if (key == 's') {
-    //String curDir = System.getProperty("user.dir");
-    
-    //getSketch().getCodeFolder() +
       mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,sketchPath("") + "/images")  );
+  }
+  
+  if (key == 'm') {
+      mlist.add(new ImageMixerModule(mouseX,mouseY,48,48,32)  );
   }
   
   if (key == 't') {

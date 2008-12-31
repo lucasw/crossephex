@@ -52,6 +52,29 @@ int findClosestModuleInDragRange(int x, int y) {
    return minInd;
 }
 
+Port findClosestPort(int x, int y) {
+  
+  int ind = findClosestModuleInDragRange(x,y);
+  if (ind < 0) return null;
+  Module closeModule = (Module)mlist.get(ind);
+  
+  float minDist = dist(0,0,width,height);
+  int minInd = -1;
+  
+  for (int i = 0; i < closeModule.inports.size(); i++) {
+    Port inport = (Port)closeModule.inports.get(i);
+      
+    float testDist = dist(closeModule.rectX + inport.x,closeModule.rectY + inport.y,x,y);
+    
+    if (testDist < minDist) {
+       minDist = testDist; 
+       minInd  = i; 
+    }
+  }
+  
+  return (Port)closeModule.inports.get(minInd);
+  
+}
 
 
 void draw(){
@@ -77,9 +100,10 @@ void draw(){
     
     /// draw the lines that connect ports
     for (int j = 0; j < thisModule.outport.mlist.size(); j++) {
-      Module endModule = (Module) thisModule.outport.mlist.get(j);
+      Port endPort = (Port) thisModule.outport.mlist.get(j);
+      
       line(thisModule.rectX+thisModule.outport.x,thisModule.rectY+thisModule.outport.y,
-            endModule.rectX+thisModule.inport.x,  endModule.rectY+thisModule.inport.y);
+            endPort.parentModule.rectX+endPort.x,  endPort.parentModule.rectY+endPort.y);
     }
   }
     
@@ -87,38 +111,49 @@ void draw(){
 }
 
 
+/// harmless if there is no connection
+boolean removeConnection(Port inport) {
+   /// inports can only support one input,
+   // so clear out anything connected to it before adding this one
+   for (int j = 0; j < inport.mlist.size(); j++) {
+      Port otherConnectedPort = (Port) inport.mlist.get(j);
+      int removeind = otherConnectedPort.mlist.indexOf(inport);
+      
+      if (removeind >= 0) { 
+        otherConnectedPort.mlist.remove(removeind);
+         /// TBD may screw up for loop?  But for loop should only ever run once
+        inport.mlist.remove(j); 
+      } else {
+        println("failed to find module for removal, probably a bug"); 
+        return false;  
+      }
+   }
+   
+   return true;
+}
+
 /// TBD need to prevent modules that have no input capability from being connected
 boolean connectModule() {
   /// connect an output port to another module's input port
-     int ind = findClosestModuleInDragRange(mouseX,mouseY);
+   
   
-     if ((moduleSelected >= 0) && (ind >= 0)) {
-       Module startModule = (Module) mlist.get(moduleSelected);
-       Module endModule   = (Module) mlist.get(ind);
-        
-       /// inports can only support one input,
-       // so clear out anything connected to it before adding this one
-       for (int j = 0; j < endModule.inport.mlist.size(); j++) {
-          Module otherConnectedModule = (Module) endModule.inport.mlist.get(j);
-          int removeind = otherConnectedModule.outport.mlist.indexOf(endModule);
-          
-          if (removeind >= 0) { 
-            otherConnectedModule.outport.mlist.remove(removeind);
-             /// TBD may screw up for loop?  But for loop should only ever run once
-            endModule.inport.mlist.remove(j); 
-          } else {
-            println("failed to find module for removal, probably a bug"); 
-            return false;  
-          }
-       }
-       
-       /// add links going in both direction
-       startModule.outport.mlist.add(endModule);
-       endModule.inport.mlist.add(startModule);
-       return true;
-     }
+   Port endPort = findClosestPort(mouseX,mouseY);
+   
+   if (endPort == null) return false;
+
+   if (moduleSelected >= 0) {
+     Port startPort = ((Module) mlist.get(moduleSelected)).outport;
+      
+     removeConnection(endPort);
      
-     return false;
+     /// add links going in both direction
+     /// TBD instead of connecting to modules, need to connect to other ports
+     startPort.mlist.add(endPort);
+     endPort.mlist.add(startPort);
+     return true;
+   }
+   
+   return false;
 }
 
 boolean selectModule() {

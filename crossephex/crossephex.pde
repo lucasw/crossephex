@@ -20,7 +20,7 @@ int updateCount = 0;
 
 void setup(){
   size(720, 576);
-  frameRate(30);
+  frameRate(10);
   background(0);
   fill(128);
   
@@ -87,7 +87,7 @@ void draw(){
   for (int i = 0; i < activeOutputs.size(); i++) {
     Module thisModule =  (Module) activeOutputs.get(i);
       
-    thisModule.update(updateCount);
+    thisModule.update(updateCount,null);
     
 
   }
@@ -99,12 +99,14 @@ void draw(){
     thisModule.display(i == moduleSelected);  
     
     /// draw the lines that connect ports
+    if ( thisModule.outport != null) {
     for (int j = 0; j < thisModule.outport.mlist.size(); j++) {
       Port endPort = (Port) thisModule.outport.mlist.get(j);
       
       line(thisModule.rectX+thisModule.outport.x,thisModule.rectY+thisModule.outport.y,
             endPort.parentModule.rectX+endPort.x,  endPort.parentModule.rectY+endPort.y);
     }
+  }
   }
     
 

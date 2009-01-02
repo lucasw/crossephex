@@ -115,8 +115,13 @@ class Module {
   }
 
   /// do something when the module is selected 
-  void toggle(){
-    
+  void toggle() {
+  }
+  
+  void right() {
+  }
+  
+  void left() {
   }
     
   void display(boolean isSelected) {
@@ -151,7 +156,7 @@ class Module {
   }
 }
 
-/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 
 class PassthroughModule extends Module {
   PassthroughModule(int rX, int rY, int rH, int rW, int dM) {   
@@ -176,17 +181,14 @@ class PassthroughModule extends Module {
       toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
     }
     
-      
   }
 }
 
-/////
+////////////////////////////////////////////////////////////////////////////////////////////
 
 class ImageMixerModule extends Module {
-  
-  
+   
   float mix = 0.5;
-  
   
   ImageMixerModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
@@ -204,6 +206,16 @@ class ImageMixerModule extends Module {
      inports.add(inport2);
   }
 
+  void right() {
+    mix += 0.01;
+    if (mix > 1.0) mix = 1.0;
+  }
+  
+  void left() {
+    mix -= 0.01;
+    if (mix < 0.0) mix = 0.0;
+  }
+
   void display(boolean isSelected) {
     super.display(isSelected);
     
@@ -211,6 +223,10 @@ class ImageMixerModule extends Module {
     translate(rectX,rectY);
     outport.display();
     //text("source");
+    
+    fill(120,160,140);
+    rect(-rectWidth/2+rectWidth*mix/2,rectHeight/2, rectWidth*mix, 10);
+    
     popMatrix();
   }
  
@@ -247,8 +263,6 @@ class ImageMixerModule extends Module {
         mix*green(c1) + (1.0-mix)*green(c2),
         mix*blue(c1)  + (1.0-mix)*blue(c2)
       );
-      
-      if (pixind0 == 0) println(im1 + " " + im2);//println(red(c1) + " " + red(c2) + " " + red(im.pixels[pixind0]) );
       
     }}
     

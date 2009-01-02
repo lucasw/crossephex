@@ -152,6 +152,9 @@ class Module {
       fill(0,255,0);
       rect(-rectWidth/2+10/2,-rectHeight/2+10/2,10,10);
     }
+    
+    if (outport != null) outport.display();
+    
     popMatrix();
   }
 }
@@ -232,16 +235,50 @@ class ImageMixerModule extends Module {
  
   void update(int updateCount, Module toUpdate) {
     super.update(updateCount, toUpdate);
+
+    if (inports.size() != 2) return;
+
+    Port port1 = (Port)inports.get(0);
+    Port port2 = (Port)inports.get(1);
+
+    if ((port1 == null) && (port2 == null)) return;
     
-    if (((Port)inports.get(0)).mlist.get(0) == null) return;
-    if (((Port)inports.get(0)).mlist.get(0) == null) return;
+    PImage im1, im2;
+     
+    /*
+    /// copy image through if other input is null
+    if (port1 == null) {
+      if (port2.mlist.get(0) == null) return; 
+      im1 = ( (Port) (port2.mlist.get(0)) ).parentModule.im;
+    } else {
+   
+    }
+    if (port2 == null) {
+      if (port1.mlist.get(0) == null) return;
+      im2 = ( (Port) (port1.mlist.get(0)) ).parentModule.im;
+    } else {    
+
+    }
+    */
     
-    PImage im1 = ((Port) ( ((Port)inports.get(0)).mlist.get(0))).parentModule.im;
-    PImage im2 = ((Port) ( ((Port)inports.get(1)).mlist.get(0))).parentModule.im;
+    if (port1.mlist.size() < 1) return;
+    if (port2.mlist.size() < 1) return;
     
-    if (im == null) return;
+    /// The ports connected to the inports
+    Port cport1 = (Port) port1.mlist.get(0);
+    Port cport2 = (Port) port2.mlist.get(0);
+    
+    if (cport1 == null) return;
+    im1 = cport1.parentModule.im;
+    if (cport2 == null) return; 
+    im2 = cport2.parentModule.im;
+        
+    if (im  == null) return;
     if (im1 == null) return;
     if (im2 == null) return;
+    
+    PImage newim;
+    newim = createImage(im.width,im.height,RGB);
     
     int w = min(im1.width, im2.width,im.width);
     int h = min(im1.height,im2.height,im.height);
@@ -258,7 +295,7 @@ class ImageMixerModule extends Module {
       color c2 = im2.pixels[pixind2];
       
       
-      im.pixels[pixind0] = color(
+      newim.pixels[pixind0] = color(
         mix*red(c1)   + (1.0-mix)*red(c2),
         mix*green(c1) + (1.0-mix)*green(c2),
         mix*blue(c1)  + (1.0-mix)*blue(c2)
@@ -266,6 +303,8 @@ class ImageMixerModule extends Module {
       
     }}
     
+    /// buffer the output in case one of the inputs is also the output
+    im = newim;
     
     /// by putting the image copying and processing code after the recursive update
     /// we should have 1-cycle forward propagation of changes that don't involve loops
@@ -273,14 +312,60 @@ class ImageMixerModule extends Module {
       // TBD add a flag that either propagates the inherited image size forward or always
       // resizes at this step.
       /// TBD this is not correct in all modules that inherit from this, like the mixer
-     if (toUpdate.im == null) toUpdate.im = createImage(im.width,im.height,RGB);
-      toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
+     if ((toUpdate.im == null) || 
+         (toUpdate.im.width  != im.width) || 
+         (toUpdate.im.height != im.height)) {
+       toUpdate.im = createImage(im.width,im.height,RGB); 
+     }
+     
+     toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
 
   }
-  
 }
 
-/////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+class ImageTranslateModule extends Module {
+
+  int offsetX = 0;
+  int offsetY = 0;
+  
+  ImageTranslateModule(int rX, int rY, int rH, int rW, int dM) {   
+    super(rX, rY, rH, rW, dM);
+    
+    outport = new Port(rectWidth/2-10/2, 0, fillColor);
+    outport.parentModule = this;
+     
+    Port inport1 = new Port(-rectWidth/2+10/2, 0, fillColor);
+    inport1.parentModule = this;
+    inports.add(inport1);
+  }
+     
+  void right() {
+    offsetX += 1;
+    
+    println(offsetX);
+  }
+  
+  void left() {
+    offsetX -= 1;
+  }
+  
+  void update(int updateCount, Module toUpdate) {
+    super.update(updateCount, toUpdate);
+  
+    if (im != null) {
+      if ((toUpdate.im == null) || 
+         (toUpdate.im.width  != im.width) || 
+         (toUpdate.im.height != im.height)) {
+            toUpdate.im = createImage(im.width, im.height, RGB);
+      }
+      toUpdate.im.copy(im,offsetX,offsetY,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////
 
 // this module doesn't need an output, maybe it should extend a base 
 // class that doesn't have any?
@@ -359,11 +444,7 @@ class ImageSourceModule extends Module {
     super.display(isSelected);
     
      
-    pushMatrix();
-    translate(rectX,rectY);
-    outport.display();
-    //text("source");
-    popMatrix();
+  
   }
   
   void update(int updateCount, Module toUpdate ) {
@@ -376,7 +457,11 @@ class ImageSourceModule extends Module {
       // TBD add a flag that either propagates the inherited image size forward or always
       // resizes at this step.
       /// TBD this is not correct in all modules that inherit from this, like the mixer
-      if (toUpdate.im == null) toUpdate.im = createImage(im.width,im.height,RGB);
+      if ((toUpdate.im == null) || 
+         (toUpdate.im.width  != im.width) || 
+         (toUpdate.im.height != im.height)) {
+           toUpdate.im = createImage(im.width,im.height,RGB); 
+      }
       toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
     }
     

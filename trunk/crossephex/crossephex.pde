@@ -72,7 +72,9 @@ Port findClosestPort(int x, int y) {
     }
   }
   
-  return (Port)closeModule.inports.get(minInd);
+  
+  if (minInd >=0) return (Port)closeModule.inports.get(minInd);
+  else return null;
   
 }
 
@@ -138,7 +140,6 @@ boolean removeConnection(Port inport) {
 boolean connectModule() {
   /// connect an output port to another module's input port
    
-  
    Port endPort = findClosestPort(mouseX,mouseY);
    
    if (endPort == null) return false;
@@ -201,6 +202,10 @@ void keyPressed() {
   
   if (key == 'm') {
       mlist.add(new ImageMixerModule(mouseX,mouseY,48,48,32)  );
+  }
+  
+  if (key == 'r') {
+      mlist.add(new ImageTranslateModule(mouseX,mouseY,48,48,32)  );
   }
   
   if (key == 't') {

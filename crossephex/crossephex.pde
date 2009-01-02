@@ -3,7 +3,7 @@
  *Authors: BinaryMillenium, VirtualFlavius
  *Notes: this is very preliminary code
  *
- * 
+ * GNU GPL version 3
  */
 import java.util.ArrayList;
 
@@ -175,6 +175,22 @@ boolean selectModule() {
 // UI stuff
 
 void keyPressed() {
+  
+  if (key == CODED) {
+    if (keyCode == LEFT) {
+      if (moduleSelected >= 0) {
+        Module thisModule = (Module) mlist.get(moduleSelected);
+        thisModule.left();
+      }
+    }
+    if (keyCode == RIGHT) {
+      if (moduleSelected >= 0) {
+        Module thisModule = (Module) mlist.get(moduleSelected);
+        thisModule.right();
+      }
+    }
+  }
+  
   if (key == 'a') {
       mlist.add(new Module(mouseX,mouseY,48,48,32)  );
   }

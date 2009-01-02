@@ -146,7 +146,9 @@ boolean connectModule() {
 
    if (moduleSelected >= 0) {
      Port startPort = ((Module) mlist.get(moduleSelected)).outport;
-      
+     
+     if (startPort == null) return false;
+     
      removeConnection(endPort);
      
      /// add links going in both direction
@@ -193,19 +195,27 @@ void keyPressed() {
   }
   
   if (key == 'a') {
-      mlist.add(new Module(mouseX,mouseY,48,48,32)  );
+      mlist.add(new Module(mouseX,mouseY,48,48,32) );
+      moduleSelected = mlist.size() - 1;
   }
   
   if (key == 's') {
       mlist.add(new ImageSourceModule(mouseX,mouseY,48,48,32,sketchPath("") + "/images")  );
+      moduleSelected = mlist.size() - 1;
   }
   
   if (key == 'm') {
       mlist.add(new ImageMixerModule(mouseX,mouseY,48,48,32)  );
+      moduleSelected = mlist.size() - 1;
   }
   
   if (key == 'r') {
       mlist.add(new ImageTranslateModule(mouseX,mouseY,48,48,32)  );
+      moduleSelected = mlist.size() - 1;
+  }
+  if (key == 'p') {
+      mlist.add(new PassthroughModule(mouseX,mouseY,48,48,32)  );
+      moduleSelected = mlist.size() - 1;
   }
   
   if (key == 't') {

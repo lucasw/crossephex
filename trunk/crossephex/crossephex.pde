@@ -20,14 +20,20 @@ int updateCount = 0;
 
 void setup(){
   size(720, 576);
-  frameRate(10);
+  frameRate(15);
   background(0);
   fill(128);
   
+   PFont fontA = loadFont("AlArabiya-14.vlw");
+  // textMode(SCREEN);
+
+  // Set the font and its size (in units of pixels)
+  textFont(fontA, 18);
   
   println("Press the 'a' key to add a new module to the screen \n" +
-   "'s' key to add a new image source module\n" +
+   "'s' key to add a new image source\n" +
     "'d' key to add a new display module\n" +
+        "'m' key to add a mixer\n" +
  "select a module with the left mouse button and connect it to another module with \n" +
  "the right mouse button");
   

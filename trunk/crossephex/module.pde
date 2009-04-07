@@ -138,14 +138,22 @@ class Module {
     rect(0, 0, rectWidth, rectWidth);
     
      //translate(rectX,rectY);
-    if (im != null) image(im, -rectWidth*0.4, -rectHeight*0.4, 
+    if (im != null) {
+      image(im, -rectWidth*0.4, -rectHeight*0.4, 
                                rectWidth*0.4, rectHeight*0.4);
-    
+        
+        //
+        pushMatrix();
+        fill(100,200,100);
+        text( im.width + " " + im.height, 0,0);
+        popMatrix();
+    }
     
     for (int i = 0; i < inports.size(); i++) {
       Port inport = (Port)inports.get(i);
       inport.display();
     }
+    
     
     
     /// draw a green active rect to show this module has been updated this cycle
@@ -294,7 +302,10 @@ class ImageMixerModule extends Module {
     int h = min(im1.height,im2.height,im.height);
     
     //println(im1.width + " " + im2.width + " " + im.width);
+
     
+    /*
+    /// use blend instead
     for (int i = 0; i < h; i++) {
     for (int j = 0; j < w; j++) {
       int pixind0 = i*im.width+j;
@@ -304,15 +315,28 @@ class ImageMixerModule extends Module {
       color c1 = im1.pixels[pixind1];
       color c2 = im2.pixels[pixind2];
       
-      
       newim.pixels[pixind0] = color(
         mix*red(c1)   + (1.0-mix)*red(c2),
         mix*green(c1) + (1.0-mix)*green(c2),
         mix*blue(c1)  + (1.0-mix)*blue(c2)
       );
       
-      if (pixind0 ==0) println(red(c1) + " " + red(c2) + " " +  red(newim.pixels[pixind0]));
+      //if (pixind0 ==0) println(red(c1) + " " + red(c2) + " " +  red(newim.pixels[pixind0]));
     }}
+    */
+
+    
+    newim.copy( im1, 0,0, im1.width,im1.height,  0,0, newim.width, newim.height);
+    
+    for (int i = 0; i <im2.height; i++) {
+    for (int j = 0; j <im2.width; j++) {
+      int pixind = i*im2.width+j;
+      im2.pixels[ pixind ] = color(red( im2.pixels[ pixind ]),
+                                     green( im2.pixels[ pixind ]),
+                                     blue( im2.pixels[ pixind ]),mix*255.09);    
+    }}
+    newim.blend(im2, 0,0, im2.width,im2.height, 0,0, newim.width, newim.height, BLEND );
+    
     
     /// buffer the output in case one of the inputs is also the output
     im = newim;
@@ -354,13 +378,16 @@ class ImageTranslateModule extends Module {
   }
      
   void right() {
-    offsetX += 1;
+    offsetX += 5;
+    if (offsetX > im.width) offsetX = im.width;
     
     println(offsetX);
   }
   
   void left() {
-    offsetX -= 1;
+    offsetX -= 4;
+    
+    if (offsetX < -im.width) offsetX = -im.width;
   }
   
   boolean update(int updateCount, Module toUpdate) {

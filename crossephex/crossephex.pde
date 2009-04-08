@@ -20,7 +20,7 @@ int updateCount = 0;
 
 void setup(){
   size(720, 576);
-  frameRate(15);
+  frameRate(30);
   background(0);
   fill(128);
   
@@ -158,7 +158,6 @@ boolean connectModule() {
      removeConnection(endPort);
      
      /// add links going in both direction
-     /// TBD instead of connecting to modules, need to connect to other ports
      startPort.mlist.add(endPort);
      endPort.mlist.add(startPort);
      return true;

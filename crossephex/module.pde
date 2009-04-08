@@ -30,6 +30,8 @@ class Port {
   }
 }
 
+////////////////////////////////////////////////////////
+
 class Module {
   
   PImage im;
@@ -185,7 +187,7 @@ class PassthroughModule extends Module {
   
   boolean update(int updateCount, Module toUpdate) {
     if (super.update(updateCount,toUpdate) == false) return false;
-    
+    /*
     /// by putting the image copying and processing code after the recursive update
     /// we should have 1-cycle forward propagation of changes that don't involve loops
     /// TBD - is this desirable?  It may be useful if every module is also a unit delay
@@ -199,210 +201,29 @@ class PassthroughModule extends Module {
        toUpdate.im = createImage(im.width,im.height,RGB); 
      }
       toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-    }
+    }*/
     
-    return true;
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-
-class ImageMixerModule extends Module {
-   
-  float mix = 0.5;
-  
-  ImageMixerModule(int rX, int rY, int rH, int rW, int dM) {   
-    super(rX, rY, rH, rW, dM);
-    fillColor = color(110,150,149);
-    
-     outport = new Port(rectWidth/2-10/2, 0, fillColor);
-     outport.parentModule = this;
-     
-     Port inport1 = new Port(-rectWidth/2+10/2, 0, fillColor);
-     inport1.parentModule = this;
-     inports.add(inport1);
-     
-     Port inport2 = new Port(-rectWidth/2+10/2,12, fillColor);
-     inport2.parentModule = this;
-     inports.add(inport2);
-  }
-
-  void right() {
-    mix += 0.01;
-    if (mix > 1.0) mix = 1.0;
-  }
-  
-  void left() {
-    mix -= 0.01;
-    if (mix < 0.0) mix = 0.0;
-  }
-
-  void display(boolean isSelected) {
-    super.display(isSelected);
-    
-    pushMatrix();
-    translate(rectX,rectY);
-    outport.display();
-    //text("source");
-    
-    fill(120,160,140);
-    rect(-rectWidth/2+rectWidth*mix/2,rectHeight/2, rectWidth*mix, 10);
-    
-    popMatrix();
-  }
- 
-  boolean update(int updateCount, Module toUpdate) {
-    if (super.update(updateCount,toUpdate) == false) return false;
-
-    if (inports.size() != 2) return false;
-
-    Port port1 = (Port)inports.get(0);
-    Port port2 = (Port)inports.get(1);
-
-    if ((port1 == null) && (port2 == null)) return false;
-    
-    PImage im1, im2;
-     
-    /*
-    /// copy image through if other input is null
-    if (port1 == null) {
-      if (port2.mlist.get(0) == null) return; 
-      im1 = ( (Port) (port2.mlist.get(0)) ).parentModule.im;
-    } else {
-   
-    }
-    if (port2 == null) {
-      if (port1.mlist.get(0) == null) return;
-      im2 = ( (Port) (port1.mlist.get(0)) ).parentModule.im;
-    } else {    
-
-    }
-    */
-    
-    if (port1.mlist.size() < 1) return false;
-    if (port2.mlist.size() < 1) return false;
-    
-    /// The ports connected to the inports
-    Port cport1 = (Port) port1.mlist.get(0);
-    Port cport2 = (Port) port2.mlist.get(0);
-    
-    if (cport1 == null) return false;
-    im1 = cport1.parentModule.im;
-    if (cport2 == null) return false; 
-    im2 = cport2.parentModule.im;
-        
-    if (im  == null) return false;
-    if (im1 == null) return false;
-    if (im2 == null) return false;
-    
-    PImage newim;
-    newim = createImage(im.width,im.height,RGB);
-    
-    int w = min(im1.width, im2.width,im.width);
-    int h = min(im1.height,im2.height,im.height);
-    
-    //println(im1.width + " " + im2.width + " " + im.width);
-
-    
-    /*
-    /// use blend instead
-    for (int i = 0; i < h; i++) {
-    for (int j = 0; j < w; j++) {
-      int pixind0 = i*im.width+j;
-      int pixind1 = i*im1.width+j;
-      int pixind2 = i*im2.width+j;
-      
-      color c1 = im1.pixels[pixind1];
-      color c2 = im2.pixels[pixind2];
-      
-      newim.pixels[pixind0] = color(
-        mix*red(c1)   + (1.0-mix)*red(c2),
-        mix*green(c1) + (1.0-mix)*green(c2),
-        mix*blue(c1)  + (1.0-mix)*blue(c2)
-      );
-      
-      //if (pixind0 ==0) println(red(c1) + " " + red(c2) + " " +  red(newim.pixels[pixind0]));
-    }}
-    */
-
-    
-    newim.copy( im1, 0,0, im1.width,im1.height,  0,0, newim.width, newim.height);
-    
-    for (int i = 0; i <im2.height; i++) {
-    for (int j = 0; j <im2.width; j++) {
-      int pixind = i*im2.width+j;
-      im2.pixels[ pixind ] = color(red( im2.pixels[ pixind ]),
-                                     green( im2.pixels[ pixind ]),
-                                     blue( im2.pixels[ pixind ]),mix*255.09);    
-    }}
-    newim.blend(im2, 0,0, im2.width,im2.height, 0,0, newim.width, newim.height, BLEND );
+            // copy image from parent
+         if (inports.size() < 1) {
+            return false; 
+         }
+         
+         Port inport = (Port) inports.get(0);
+         
+         if (inport.mlist.size() < 1) {
+             return false;
+         }
+            Module parent =  ((Port) inport.mlist.get(0)).parentModule;
+           
+            if ((im == null) || 
+             (parent.im.width  != im.width) || 
+             (parent.im.height != im.height)) {
+             im = createImage(parent.im.width,parent.im.height,RGB); 
+            }
+            im.copy(parent.im,0,0,parent.im.width, parent.im.height, 0,0,im.width, im.height);
+            return true;
     
     
-    /// buffer the output in case one of the inputs is also the output
-    im = newim;
-    
-    /// by putting the image copying and processing code after the recursive update
-    /// we should have 1-cycle forward propagation of changes that don't involve loops
-    /// TBD - is this desirable?  It may be useful if every module is also a unit delay
-      // TBD add a flag that either propagates the inherited image size forward or always
-      // resizes at this step.
-      /// TBD this is not correct in all modules that inherit from this, like the mixer
-     if ((toUpdate.im == null) || 
-         (toUpdate.im.width  != im.width) || 
-         (toUpdate.im.height != im.height)) {
-       toUpdate.im = createImage(im.width,im.height,RGB); 
-     }
-     
-     toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-
-     return true;
-  }
-}
-
-////////////////////////////////////////////////////////////////////////
-
-class ImageTranslateModule extends Module {
-
-  int offsetX = 0;
-  int offsetY = 0;
-  
-  ImageTranslateModule(int rX, int rY, int rH, int rW, int dM) {   
-    super(rX, rY, rH, rW, dM);
-    
-    outport = new Port(rectWidth/2-10/2, 0, fillColor);
-    outport.parentModule = this;
-     
-    Port inport1 = new Port(-rectWidth/2+10/2, 0, fillColor);
-    inport1.parentModule = this;
-    inports.add(inport1);
-  }
-     
-  void right() {
-    offsetX += 5;
-    if (offsetX > im.width) offsetX = im.width;
-    
-    println(offsetX);
-  }
-  
-  void left() {
-    offsetX -= 4;
-    
-    if (offsetX < -im.width) offsetX = -im.width;
-  }
-  
-  boolean update(int updateCount, Module toUpdate) {
-    if (super.update(updateCount,toUpdate) == false) return false;
-  
-    if (im != null) {
-      if ((toUpdate.im == null) || 
-         (toUpdate.im.width  != im.width) || 
-         (toUpdate.im.height != im.height)) {
-            toUpdate.im = createImage(im.width, im.height, RGB);
-      }
-      toUpdate.im.copy(im,offsetX,offsetY,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-    }
-    
-    return true;
   }
 }
 
@@ -423,15 +244,34 @@ class ImageOutputModule extends Module {
   
     boolean update(int updateCount, Module toUpdate) {
        if (super.update(updateCount,toUpdate) == false) return false;
-       
-          return true;
+     
+         // copy image from parent
+         if (inports.size() < 1) {
+            return false; 
+         }
+         
+         Port inport = (Port) inports.get(0);
+         
+         if (inport.mlist.size() < 1) {
+             return false;
+         }
+            Module parent =  ((Port) inport.mlist.get(0)).parentModule;
+           
+           if (parent.im == null) return false;
+           
+            if ((im == null) || 
+             (parent.im.width  != im.width) || 
+             (parent.im.height != im.height)) {
+             im = createImage(parent.im.width,parent.im.height,RGB); 
+            }
+            im.copy(parent.im,0,0,parent.im.width, parent.im.height, 0,0,im.width, im.height);
+            return true;
+
     }
   
    void display(boolean isSelected) {
       super.display(isSelected);
-      
-     
-      
+        
       pushMatrix();
       translate(rectX,rectY);
       /// probably get generalize this with im width/height parameters
@@ -496,6 +336,11 @@ class ImageSourceModule extends Module {
     /// by putting the image copying and processing code after the recursive update
     /// we should have 1-cycle forward propagation of changes that don't involve loops
     /// TBD - is this desirable?  It may be useful if every module is also a unit delay
+    
+    /// forward propagation doesn't work for multi input modules, unless ports store images
+    /// so have modules reach backwards instead
+    
+    /*
     if (im != null) {
       // TBD add a flag that either propagates the inherited image size forward or always
       // resizes at this step.
@@ -507,6 +352,7 @@ class ImageSourceModule extends Module {
       }
       toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
     }
+    */
     
  
     return true;   

@@ -1,7 +1,9 @@
-
-
-
+  final int IMAGE_PORT = 0;
+  final int NUM_PORT = 1; 
+  
 class Port {
+  
+  int type;
   int x;
   int y;
   int h = 10;
@@ -14,7 +16,9 @@ class Port {
   
   Module parentModule;
     
-  Port(int nx, int ny, color nc) {
+  Port(Module parent, int nx, int ny, color nc, int ntype) {
+    parentModule = parent;
+    type = ntype;
     x = nx;
     y = ny; 
     fillCol = nc;
@@ -28,6 +32,7 @@ class Port {
     rect(x,y, 10, 10);
     popMatrix();
   }
+  
 }
 
 ////////////////////////////////////////////////////////
@@ -48,6 +53,7 @@ class Module {
   // TBD make them arrays of default size zero
   
   ArrayList inports;
+  ArrayList number_inports;
   //Port inport;
   Port outport;
   
@@ -55,6 +61,11 @@ class Module {
   int dragMargin; 
   
   int lastUpdateCount = 0;
+  
+  /// is this redundant with lastUpdateCount?
+  /// set dirty to true when the im has changed
+  boolean dirty;
+  boolean was_dirty;
   
   Module(int rX, int rY, int rH, int rW, int dM) {
      rectX = rX;
@@ -65,26 +76,48 @@ class Module {
       
      fillColor = color(150,150,149);
      
-
+    dirty = true;
+    was_dirty = dirty;
      
      inports = new ArrayList();
+     
+     number_inports = new ArrayList();
          
   } 
  
    /// recursive update every module that's an input to this module
-   boolean update(int updateCount, Module toUpdate) {
+   boolean update(int updateCount) {
+     was_dirty = dirty;
+     
      if (lastUpdateCount == updateCount) return false;
      lastUpdateCount = updateCount;   
      
      for (int i = 0; i < inports.size(); i++) {
         Port inport = (Port)inports.get(i);
         
+        /// TBD probably can combine inports and number_inports into one list
+        /// and really simplify 
         for (int j = 0; j < inport.mlist.size(); j++) {  // should be only one
           Module otherConnectedModule = ((Port) inport.mlist.get(j)).parentModule;
-          otherConnectedModule.update(updateCount,this);
+          otherConnectedModule.update(updateCount);
         }
+        
+
       }
       
+      for (int i = 0; i < number_inports.size(); i++) {
+        Port inport = (Port)number_inports.get(i);
+        
+        /// TBD probably can combine inports and number_inports into one list
+        /// and really simplify 
+        for (int j = 0; j < inport.mlist.size(); j++) {  // should be only one
+          Module otherConnectedModule = ((Port) inport.mlist.get(j)).parentModule;
+          otherConnectedModule.update(updateCount);
+        }
+        
+
+      }
+         
       return true;
    }
    
@@ -120,12 +153,19 @@ class Module {
 
   /// do something when the module is selected 
   void toggle() {
+      dirty = true;
   }
   
   void right() {
   }
   
   void left() {
+  }
+  
+  void up() {
+  }
+  
+  void down() {
   }
     
   void display(boolean isSelected) {
@@ -156,12 +196,24 @@ class Module {
       inport.display();
     }
     
+    for (int i = 0; i < number_inports.size(); i++) {
+      Port numport = (Port)number_inports.get(i);
+      numport.display();
+    }
+    
     
     
     /// draw a green active rect to show this module has been updated this cycle
     if (lastUpdateCount == updateCount) { 
       
-      fill(0,255,0);
+      if (was_dirty) {
+        fill(0,255,0);
+ 
+      } else {
+        fill(0,128,0);
+      }
+      was_dirty = false;
+      
       rect(-rectWidth/2+10/2,-rectHeight/2+10/2,10,10);
     }
     
@@ -177,33 +229,16 @@ class PassthroughModule extends Module {
   PassthroughModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
     
-     Port inport = new Port(-rectWidth/2+10/2, 0, fillColor);
-     inport.parentModule = this;
+     Port inport = new Port(this,-rectWidth/2+10/2, 0, fillColor, IMAGE_PORT);
      inports.add(inport);
      
-     outport = new Port(rectWidth/2-10/2, 0, fillColor);
-     outport.parentModule = this;
+     outport = new Port(this,rectWidth/2-10/2, 0, fillColor, IMAGE_PORT);
   }
   
-  boolean update(int updateCount, Module toUpdate) {
-    if (super.update(updateCount,toUpdate) == false) return false;
-    /*
-    /// by putting the image copying and processing code after the recursive update
-    /// we should have 1-cycle forward propagation of changes that don't involve loops
-    /// TBD - is this desirable?  It may be useful if every module is also a unit delay
-    if (im != null) {
-      // TBD add a flag that either propagates the inherited image size forward or always
-      // resizes at this step.
-      /// TBD this is not correct in all modules that inherit from this, like the mixer
-     if ((toUpdate.im == null) || 
-         (toUpdate.im.width  != im.width) || 
-         (toUpdate.im.height != im.height)) {
-       toUpdate.im = createImage(im.width,im.height,RGB); 
-     }
-      toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-    }*/
-    
-            // copy image from parent
+  boolean update(int updateCount) {
+    if (super.update(updateCount) == false) return false;
+   
+         // copy image from parent
          if (inports.size() < 1) {
             return false; 
          }
@@ -213,8 +248,15 @@ class PassthroughModule extends Module {
          if (inport.mlist.size() < 1) {
              return false;
          }
-            Module parent =  ((Port) inport.mlist.get(0)).parentModule;
-           
+         
+         Module parent =  ((Port) inport.mlist.get(0)).parentModule;
+         
+       if (parent.im == null) return false;
+       
+       if (parent.dirty == false) return true;
+         
+         
+       dirty = true;
             if ((im == null) || 
              (parent.im.width  != im.width) || 
              (parent.im.height != im.height)) {
@@ -237,13 +279,13 @@ class ImageOutputModule extends Module {
     super(rX, rY, rH, rW, dM);
     fillColor = color(70,150,149);
     
-     Port inport1 = new Port(-rectWidth/2+10/2, 0, fillColor);
-     inport1.parentModule = this;
+     Port inport1 = new Port(this,-rectWidth/2+10/2, 0, fillColor, IMAGE_PORT);
+
      inports.add(inport1);
   }
   
-    boolean update(int updateCount, Module toUpdate) {
-       if (super.update(updateCount,toUpdate) == false) return false;
+    boolean update(int updateCount) {
+       if (super.update(updateCount) == false) return false;
      
          // copy image from parent
          if (inports.size() < 1) {
@@ -255,9 +297,13 @@ class ImageOutputModule extends Module {
          if (inport.mlist.size() < 1) {
              return false;
          }
-            Module parent =  ((Port) inport.mlist.get(0)).parentModule;
+         
+         Module parent =  ((Port) inport.mlist.get(0)).parentModule;
+         
            
-           if (parent.im == null) return false;
+         if (parent.im == null) return false;
+           
+         if (parent.dirty == false) return true;   
            
             if ((im == null) || 
              (parent.im.width  != im.width) || 
@@ -270,6 +316,7 @@ class ImageOutputModule extends Module {
     }
   
    void display(boolean isSelected) {
+       /// TBD this module always seems to be dirty, but others don't
       super.display(isSelected);
         
       pushMatrix();
@@ -282,80 +329,32 @@ class ImageOutputModule extends Module {
    }
 }
 
-///////////////////////////////////////////////////////////////////
 
-class ImageSourceModule extends Module {
+////
+
+
+
+class NumModule extends Module {
   
-  File dir;
-  String[] files;
-  int curind = -1;
+  float value = 0;
   
-  String folderName;
-  
-  ImageSourceModule(int rX, int rY, int rH, int rW, int dM, String folderName) {
+  NumModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
     
-    this.folderName = folderName;
-    
-    fillColor = color(190,160,157);
-  
-    dir = new File( folderName);
-    files = dir.list();
-    
-    
-    if (files == null) {
-      println(folderName + " dir not found"); 
-      return;
-    }
-    
-    toggle();
-    
-     outport = new Port(rectWidth/2-10/2, 0, fillColor);
-     outport.parentModule = this;
-    
-  }
-  
-  void toggle() {
-    for (int i = curind+1; i < curind+files.length; i++) {
-      int newind = i%files.length;
-      im = loadImage(folderName + "/" + files[newind]);
-      if (im != null) { curind = newind; break; }
-    }
-  }
-  
-  void display(boolean isSelected) {
-    super.display(isSelected);
-    
      
-  
+     outport = new Port(this,rectWidth/2-10/2, 0, fillColor, NUM_PORT);
   }
   
-  boolean update(int updateCount, Module toUpdate ) {
-     if (super.update(updateCount,toUpdate) == false) return false;
-    
-    /// by putting the image copying and processing code after the recursive update
-    /// we should have 1-cycle forward propagation of changes that don't involve loops
-    /// TBD - is this desirable?  It may be useful if every module is also a unit delay
-    
-    /// forward propagation doesn't work for multi input modules, unless ports store images
-    /// so have modules reach backwards instead
-    
-    /*
-    if (im != null) {
-      // TBD add a flag that either propagates the inherited image size forward or always
-      // resizes at this step.
-      /// TBD this is not correct in all modules that inherit from this, like the mixer
-      if ((toUpdate.im == null) || 
-         (toUpdate.im.width  != im.width) || 
-         (toUpdate.im.height != im.height)) {
-           toUpdate.im = createImage(im.width,im.height,RGB); 
-      }
-      toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-    }
-    */
-    
- 
-    return true;   
+  boolean update(int updateCount) {
+    if (super.update(updateCount) == false) return false;
+   
+       float time = (float)updateCount/300.0;
+       
+       
+       value = noise(time);
+       dirty = true;
+         
+       return true;
+   
   }
 }
-

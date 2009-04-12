@@ -8,26 +8,27 @@ class ImageMixerModule extends Module {
     super(rX, rY, rH, rW, dM);
     fillColor = color(110,150,149);
     
-     outport = new Port(rectWidth/2-10/2, 0, fillColor);
-     outport.parentModule = this;
+     outport = new Port(this,rectWidth/2-10/2, 0, fillColor,IMAGE_PORT);
      
-     Port inport1 = new Port(-rectWidth/2+10/2, 0, fillColor);
-     inport1.parentModule = this;
+     Port inport1 = new Port(this,-rectWidth/2+10/2, 0, fillColor,IMAGE_PORT);
      inports.add(inport1);
      
-     Port inport2 = new Port(-rectWidth/2+10/2,12, fillColor);
-     inport2.parentModule = this;
+     Port inport2 = new Port(this,-rectWidth/2+10/2,12, fillColor,IMAGE_PORT);
      inports.add(inport2);
   }
 
   void right() {
+    super.right();
     mix += 0.01;
     if (mix > 1.0) mix = 1.0;
+
   }
   
   void left() {
+    super.left();
     mix -= 0.01;
     if (mix < 0.0) mix = 0.0;
+
   }
 
   void display(boolean isSelected) {
@@ -44,8 +45,8 @@ class ImageMixerModule extends Module {
     popMatrix();
   }
  
-  boolean update(int updateCount, Module toUpdate) {
-    if (super.update(updateCount,toUpdate) == false) return false;
+  boolean update(int updateCount) {
+    if (super.update(updateCount) == false) return false;
 
     if (inports.size() != 2) return false;
 
@@ -85,8 +86,15 @@ class ImageMixerModule extends Module {
     im2 = cport2.parentModule.im;
         
     
+    
     if (im1 == null) return false;
     if (im2 == null) return false;
+   
+    if (!dirty && !cport1.parentModule.dirty && !cport2.parentModule.dirty) {
+        return true;
+    }
+    
+    dirty = true;
     
     PImage newim;
     
@@ -149,26 +157,6 @@ class ImageMixerModule extends Module {
              im = createImage(newim.width,newim.height,RGB); 
      }
      im.copy(newim,0,0,newim.width, newim.height, 0,0,im.width, im.height);
-
-
-    
-    
-    /*
-    /// by putting the image copying and processing code after the recursive update
-    /// we should have 1-cycle forward propagation of changes that don't involve loops
-    /// TBD - is this desirable?  It may be useful if every module is also a unit delay
-      // TBD add a flag that either propagates the inherited image size forward or always
-      // resizes at this step.
-      /// TBD this is not correct in all modules that inherit from this, like the mixer
-     if ((toUpdate.im == null) || 
-         (toUpdate.im.width  != im.width) || 
-         (toUpdate.im.height != im.height)) {
-       toUpdate.im = createImage(im.width,im.height,RGB); 
-     }
-     
-     toUpdate.im.copy(im,0,0,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-*/
-
 
      return true;
   }

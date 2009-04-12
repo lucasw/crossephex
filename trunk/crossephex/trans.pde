@@ -2,67 +2,91 @@
 
 class ImageTranslateModule extends Module {
 
-  int offsetX = 0;
-  int offsetY = 0;
+  float offsetX = 0;
+  float offsetY = 0;
   
   ImageTranslateModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
     
-    outport = new Port(rectWidth/2-10/2, 0, fillColor);
-    outport.parentModule = this;
-     
-    Port inport1 = new Port(-rectWidth/2+10/2, 0, fillColor);
-    inport1.parentModule = this;
+    outport = new Port(this,rectWidth/2-10/2, 0, fillColor, IMAGE_PORT);
+   
+    Port inport1 = new Port(this,-rectWidth/2+10/2, 0, fillColor, IMAGE_PORT);
     inports.add(inport1);
+    
+    Port number_port_lr = new Port(this,0,-rectHeight/2+10/2, fillColor, NUM_PORT);
+    number_inports.add(number_port_lr);
+    ///Port number_port_ud = new Port(this,0, rectHeight/2-10/2, fillColor, NUM_PORT);
+    //number_inports.add(number_port_ud);
   }
      
   void right() {
-    offsetX += 5;
-    if (offsetX > im.width) offsetX = im.width;
-    
-    println(offsetX);
+    offsetX += 0.1;
+    if (offsetX > 1.0) offsetX = 1.0; 
   }
   
   void left() {
-    offsetX -= 4;
-    
-    if (offsetX < -im.width) offsetX = -im.width;
+    offsetX -= 0.1; 
+    if (offsetX < -1.0) offsetX = -1.0;
+  }
+
+  void down() {
+    offsetY += 0.1;
+    if (offsetY > 1.0) offsetY = 1.0; 
   }
   
-  boolean update(int updateCount, Module toUpdate) {
-    if (super.update(updateCount,toUpdate) == false) return false;
+  void up() {
+    offsetY -= 0.1; 
+    if (offsetY < -1.0) offsetY = -1.0;
+  }
+  
+  boolean update(int updateCount) {
+    if (super.update(updateCount) == false) return false;
+  
+        
+        /// get number inputs if any
+        Port numport = (Port) number_inports.get(0);
+        
+        if (numport.mlist.size() > 0) {
+        Port numconn = ((Port)numport.mlist.get(0));
+        if (numconn != null) {
+              
+           NumModule numModule = (NumModule) numconn.parentModule;
+           
+           if (numModule != null) {
+             dirty = true;       
+             offsetX = numModule.value;
+             
+             //println(offsetX);
+           }
+        } 
+        }
   
        // copy image from parent
-         if (inports.size() < 1) {
-            return false; 
-         }
+         if (inports.size() < 1)  return false;  
          
          Port inport = (Port) inports.get(0);
          
-         if (inport.mlist.size() < 1) {
-             return false;
-         }
-            Module parent =  ((Port) inport.mlist.get(0)).parentModule;
+         if (inport.mlist.size() < 1)  return false;
+       
+         Module parent =  ((Port) inport.mlist.get(0)).parentModule;
            
            if (parent.im == null) return false;
+           
+           //println("trans");
+           if (!dirty && !parent.dirty) return true;
+           //println("trans dirty");
+           dirty = true;       
            
             if ((im == null) || 
              (parent.im.width  != im.width) || 
              (parent.im.height != im.height)) {
              im = createImage(parent.im.width,parent.im.height,RGB); 
             }
-            im.copy(parent.im,offsetX,offsetY,parent.im.width, parent.im.height, 0,0,im.width, im.height);
-            
-  /*
-    if (im != null) {
-      if ((toUpdate.im == null) || 
-         (toUpdate.im.width  != im.width) || 
-         (toUpdate.im.height != im.height)) {
-            toUpdate.im = createImage(im.width, im.height, RGB);
-      }
-      toUpdate.im.copy(im,offsetX,offsetY,im.width, im.height, 0,0,toUpdate.im.width, toUpdate.im.height);
-    }
-    */
+            im.copy(parent.im,(int)(im.width*offsetX),
+                              (int)(im.height*offsetY),parent.im.width,
+                              parent.im.height, 0,0,im.width, im.height);
+    
+    
     
     return true;
   }

@@ -4,6 +4,9 @@ class ImageMixerModule extends Module {
    
   float mix = 0.5;
   
+  
+  int mode = BLEND;
+  
   ImageMixerModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
     fillColor = color(110,150,149);
@@ -29,6 +32,21 @@ class ImageMixerModule extends Module {
     mix -= 0.01;
     if (mix < 0.0) mix = 0.0;
 
+  }
+  
+  void up() {
+    mode *= 2;
+    
+    
+    if (mode > 8192) mode = 1;
+    println("blendmode " + mode);
+  }
+  
+  void down() {
+    mode /= 2;
+    
+    if (mode < 1) mode = 8192;
+    println("blendmode " + mode);
   }
 
   void display(boolean isSelected) {
@@ -140,6 +158,9 @@ class ImageMixerModule extends Module {
     
     newim.copy( im1, 0,0, im1.width,im1.height,  0,0, newim.width, newim.height);
     
+    /// this sets the alpha channel manually to a single value.
+    /// TBD also allow true alpha channel to be used, also be able to manipulate that
+    /// alpha channel more.
     for (int i = 0; i <im2.height; i++) {
     for (int j = 0; j <im2.width; j++) {
       int pixind = i*im2.width+j;
@@ -147,7 +168,7 @@ class ImageMixerModule extends Module {
                                      green( im2.pixels[ pixind ]),
                                      blue( im2.pixels[ pixind ]),mix*255.09);    
     }}
-    newim.blend(im2, 0,0, im2.width,im2.height, 0,0, newim.width, newim.height, BLEND );
+    newim.blend(im2, 0,0, im2.width,im2.height, 0,0, newim.width, newim.height, mode );
     
     
     /// buffer the output in case one of the inputs is also the output
@@ -157,6 +178,12 @@ class ImageMixerModule extends Module {
              im = createImage(newim.width,newim.height,RGB); 
      }
      im.copy(newim,0,0,newim.width, newim.height, 0,0,im.width, im.height);
+     
+     
+     pushMatrix();
+     fill(100,220,100);
+     text( mode, 0,0);
+     popMatrix();
 
      return true;
   }

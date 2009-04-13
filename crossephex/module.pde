@@ -253,16 +253,15 @@ class PassthroughModule extends Module {
          
        if (parent.im == null) return false;
        
-       if (parent.dirty == false) return true;
-         
-         
+       if (dirty == false && parent.dirty == false) return true;      
        dirty = true;
-            if ((im == null) || 
+       
+       if ((im == null) || 
              (parent.im.width  != im.width) || 
              (parent.im.height != im.height)) {
              im = createImage(parent.im.width,parent.im.height,RGB); 
-            }
-            im.copy(parent.im,0,0,parent.im.width, parent.im.height, 0,0,im.width, im.height);
+       }
+       im.copy(parent.im,0,0,parent.im.width, parent.im.height, 0,0,im.width, im.height);
             return true;
     
     
@@ -329,32 +328,3 @@ class ImageOutputModule extends Module {
    }
 }
 
-
-////
-
-
-
-class NumModule extends Module {
-  
-  float value = 0;
-  
-  NumModule(int rX, int rY, int rH, int rW, int dM) {   
-    super(rX, rY, rH, rW, dM);
-    
-     
-     outport = new Port(this,rectWidth/2-10/2, 0, fillColor, NUM_PORT);
-  }
-  
-  boolean update(int updateCount) {
-    if (super.update(updateCount) == false) return false;
-   
-       float time = (float)updateCount/300.0;
-       
-       
-       value = noise(time);
-       dirty = true;
-         
-       return true;
-   
-  }
-}

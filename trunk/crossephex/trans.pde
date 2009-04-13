@@ -15,8 +15,8 @@ class ImageTranslateModule extends Module {
     
     Port number_port_lr = new Port(this,0,-rectHeight/2+10/2, fillColor, NUM_PORT);
     number_inports.add(number_port_lr);
-    ///Port number_port_ud = new Port(this,0, rectHeight/2-10/2, fillColor, NUM_PORT);
-    //number_inports.add(number_port_ud);
+    Port number_port_ud = new Port(this,15,-rectHeight/2+10/2, fillColor, NUM_PORT);
+    number_inports.add(number_port_ud);
   }
      
   void right() {
@@ -44,6 +44,7 @@ class ImageTranslateModule extends Module {
   
         
         /// get number inputs if any
+        {
         Port numport = (Port) number_inports.get(0);
         
         if (numport.mlist.size() > 0) {
@@ -59,6 +60,25 @@ class ImageTranslateModule extends Module {
              //println(offsetX);
            }
         } 
+        }
+        
+        }
+        {
+                /// get number inputs if any
+        Port numport = (Port) number_inports.get(1);
+        
+        if (numport.mlist.size() > 0) {
+        Port numconn = ((Port)numport.mlist.get(0));
+        if (numconn != null) {
+              
+           NumModule numModule = (NumModule) numconn.parentModule;
+           
+           if (numModule != null) {
+             dirty = true;       
+             offsetY = numModule.value;
+           }
+        } 
+        }
         }
   
        // copy image from parent

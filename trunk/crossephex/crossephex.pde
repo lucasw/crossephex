@@ -168,15 +168,14 @@ void draw(){
         
         if (any_dirty) break;
       } 
-      
-      
-      
-      
+          
       thisModule.dirty = any_dirty;
   }
   }
     
 
+
+saveFrame("frames/cphex_#######.png");
 }
 
 
@@ -300,7 +299,7 @@ void keyPressed() {
   }
    
   if (key == 'd') {
-      ImageOutputModule newmod = new ImageOutputModule(mouseX,mouseY,320,240,32)  ;
+      ImageOutputModule newmod = new ImageOutputModule(mouseX,mouseY,250,250,32)  ;
       mlist.add(newmod);
       activeOutputs.add(newmod);
   }

@@ -116,6 +116,9 @@ Port findClosestPort(int x, int y, int type) {
 
 void draw(){
   
+  int stime = millis();
+  
+  pushMatrix();
   background(0);
   
   updateCount++;
@@ -180,9 +183,15 @@ void draw(){
   }
   }
     
+  popMatrix();
 
-
-saveFrame("frames/cphex_#######.png");
+//saveFrame("frames/cphex_#######.png");
+  pushMatrix();
+  
+    translate(20,20);
+        fill(100,200,100);
+        text( millis() - stime, 0,0);
+   popMatrix();
 }
 
 

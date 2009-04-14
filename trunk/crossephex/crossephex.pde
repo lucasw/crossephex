@@ -21,7 +21,7 @@ int moduleSelected = -1;
 int updateCount = 0;
 
 void setup(){
-  size(720, 576);
+  size(720, 576,P3D);
   frameRate(30);
   background(0);
   fill(128);
@@ -33,15 +33,22 @@ void setup(){
   textFont(fontA, 18);
   
   println("Press the 'a' key to add a new module to the screen \n" +
-   "'s' key to add a new image source\n" +
-    "'d' key to add a new display module\n" +
-        "'m' key to add a mixer\n" +
+   "'s' image source\n" +
+   "'m' image mixer\n" +
+   "'n' number source\n" +
+   "'r' image translate\n" +
+   "'p' image passthrough\n" +
+   "'d' key to add a new display module\n" +
+   "'t' to toggle when a module is selected\n" +
+   "arrow keys to change module parameters\n" +
+
  "select a module with the left mouse button and connect it to another module with \n" +
  "the right mouse button");
   
   rectMode(CENTER);
 
 }
+
 
 int findClosestModuleInDragRange(int x, int y) {
   float minDist = dist(0,0,width,height);
@@ -254,15 +261,6 @@ void keyPressed() {
        thisModule = (Module) mlist.get(moduleSelected);
    }
       
-  if (key == CODED) {
-    if (thisModule != null) {
-      if (keyCode == LEFT)  { thisModule.dirty = true; thisModule.left(); }
-      if (keyCode == RIGHT) { thisModule.dirty = true; thisModule.right(); }
-      if (keyCode == UP)    { thisModule.dirty = true; thisModule.up(); }
-      if (keyCode == DOWN)  { thisModule.dirty = true; thisModule.down(); }
-    }
-  }
-  
   if (key == 'a') {
       mlist.add(new Module(mouseX,mouseY,48,48,32) );
       moduleSelected = mlist.size() - 1;
@@ -292,18 +290,26 @@ void keyPressed() {
       moduleSelected = mlist.size() - 1;
   }
   
-  if (key == 't') {
-    if (moduleSelected >= 0) {
-      if (thisModule != null) thisModule.toggle();
-    }
-  }
-   
   if (key == 'd') {
       ImageOutputModule newmod = new ImageOutputModule(mouseX,mouseY,250,250,32)  ;
       mlist.add(newmod);
       activeOutputs.add(newmod);
   }
   
+    if (key == 't') {
+    if (moduleSelected >= 0) {
+      if (thisModule != null) thisModule.toggle();
+    }
+  }
+  
+  if (key == CODED) {
+    if (thisModule != null) {
+      if (keyCode == LEFT)  { thisModule.dirty = true; thisModule.left(); }
+      if (keyCode == RIGHT) { thisModule.dirty = true; thisModule.right(); }
+      if (keyCode == UP)    { thisModule.dirty = true; thisModule.up(); }
+      if (keyCode == DOWN)  { thisModule.dirty = true; thisModule.down(); }
+    }
+  }
 }
 
 public void mouseDragged(){

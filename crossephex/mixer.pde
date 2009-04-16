@@ -3,13 +3,20 @@
 class ImageMixerModule extends Module {
    
   float mix = 0.5;
+  float oldMix = 0.0;
   
+  PImage msk;
+  PImage mskbig;
   
   int mode = BLEND;
   
   ImageMixerModule(int rX, int rY, int rH, int rW, int dM) {   
     super(rX, rY, rH, rW, dM);
     fillColor = color(110,150,149);
+    
+    /// a 1x1 image doesn't work
+    msk = createImage(2,2,RGB);
+    mskbig = createImage(2,2,RGB);
     
      outport = new Port(this,rectWidth/2-10/2, 0, fillColor,IMAGE_PORT);
      
@@ -18,6 +25,10 @@ class ImageMixerModule extends Module {
      
      Port inport2 = new Port(this,-rectWidth/2+10/2,12, fillColor,IMAGE_PORT);
      inports.add(inport2);
+     
+     
+     Port number_port_mix = new Port(this,0,-rectHeight/2+10/2, fillColor, NUM_PORT);
+     number_inports.add(number_port_mix);
   }
 
   void right() {
@@ -65,6 +76,30 @@ class ImageMixerModule extends Module {
  
   boolean update(int updateCount) {
     if (super.update(updateCount) == false) return false;
+    
+            /// get number inputs if any
+        {
+        Port numport = (Port) number_inports.get(0);
+        
+        if (numport.mlist.size() > 0) {
+        Port numconn = ((Port)numport.mlist.get(0));
+        if (numconn != null) {
+              
+           NumModule numModule = (NumModule) numconn.parentModule;
+           
+           if (numModule != null) {
+             dirty = true;       
+             mix = 0.5*(numModule.value +1.0);
+             if (mix < 0.0) mix = 0.0;
+             if (mix > 1.0) mix = 1.0;
+             
+             //println(offsetX);
+           }
+        } 
+        }
+        }
+    
+    
 
     if (inports.size() != 2) return false;
 
@@ -132,44 +167,37 @@ class ImageMixerModule extends Module {
      newim = createImage(w,h,RGB);
     }
     //println(im1.width + " " + im2.width + " " + im.width);
-
-    
-    /*
-    /// use blend instead
-    for (int i = 0; i < h; i++) {
-    for (int j = 0; j < w; j++) {
-      int pixind0 = i*im.width+j;
-      int pixind1 = i*im1.width+j;
-      int pixind2 = i*im2.width+j;
-      
-      color c1 = im1.pixels[pixind1];
-      color c2 = im2.pixels[pixind2];
-      
-      newim.pixels[pixind0] = color(
-        mix*red(c1)   + (1.0-mix)*red(c2),
-        mix*green(c1) + (1.0-mix)*green(c2),
-        mix*blue(c1)  + (1.0-mix)*blue(c2)
-      );
-      
-      //if (pixind0 ==0) println(red(c1) + " " + red(c2) + " " +  red(newim.pixels[pixind0]));
-    }}
-    */
-
     
     newim.copy( im1, 0,0, im1.width,im1.height,  0,0, newim.width, newim.height);
     
-    /// this sets the alpha channel manually to a single value.
-    /// TBD also allow true alpha channel to be used, also be able to manipulate that
-    /// alpha channel more.
-    for (int i = 0; i <im2.height; i++) {
-    for (int j = 0; j <im2.width; j++) {
-      int pixind = i*im2.width+j;
-      im2.pixels[ pixind ] = color(red( im2.pixels[ pixind ]),
-                                     green( im2.pixels[ pixind ]),
-                                     blue( im2.pixels[ pixind ]),mix*255.09);    
-    }}
-    newim.blend(im2, 0,0, im2.width,im2.height, 0,0, newim.width, newim.height, mode );
+    // no tint for pimage
+    //im2.tint(255,255,255,int(mix*255.0));
     
+    /// quickest tint I could come up with
+    if ((abs(255.0*(mix - oldMix)) >= 1.0) || 
+        (mskbig.width != im2.width) || 
+        (mskbig.height != im2.height)) { 
+      msk.pixels[0] = color(mix*255.0,mix*255.0,mix*255.0,mix*255.0);
+      msk.pixels[1] = color(mix*255.0,mix*255.0,mix*255.0,mix*255.0);
+      msk.pixels[2] = color(mix*255.0,mix*255.0,mix*255.0,mix*255.0);
+      msk.pixels[3] = color(mix*255.0,mix*255.0,mix*255.0,mix*255.0);
+       
+      mskbig = createImage(im2.width,im2.height,RGB);
+      mskbig.copy(msk,0,0,msk.width,msk.height, 0,0,mskbig.width,mskbig.height);
+      
+      oldMix = mix;
+    }
+    
+    
+
+    
+    PImage newim2 = createImage(im2.width,im2.height,RGB);
+    newim2.copy(im2,0,0,im2.width,im2.height, 0,0,newim2.width,newim2.height);
+    newim2.mask(mskbig);
+    
+    newim.blend(newim2, 0,0, newim2.width,newim2.height, 0,0, newim.width, newim.height, mode );
+    
+   //// newim.copy(msk,0,0,msk.width,msk.height,  0,0, newim.width, newim.height);
     
     /// buffer the output in case one of the inputs is also the output
      if ((im == null) || 

@@ -113,6 +113,7 @@ Port findClosestPort(int x, int y, int type) {
   
 }
 
+float avgtime = 0.0;
 
 void draw(){
   
@@ -190,7 +191,9 @@ void draw(){
   
     translate(20,20);
         fill(100,200,100);
-        text( millis() - stime, 0,0);
+        
+        avgtime =int( 0.15*(millis() - stime) + 0.85*avgtime);
+        text(avgtime , 0,0);
    popMatrix();
 }
 

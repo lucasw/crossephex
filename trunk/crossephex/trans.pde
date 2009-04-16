@@ -61,8 +61,8 @@ class ImageTranslateModule extends Module {
            }
         } 
         }
-        
         }
+        
         {
                 /// get number inputs if any
         Port numport = (Port) number_inports.get(1);
